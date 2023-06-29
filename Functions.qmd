@@ -53,6 +53,8 @@ library(ggplot2)
 ggplot(temps_df, aes(x = fahr, y = celcius, color = kelvin)) + geom_point() + custom_theme(20)
 
 ```
+
+devtools::install
 ## scatterplot_function
 
 ```{r}
