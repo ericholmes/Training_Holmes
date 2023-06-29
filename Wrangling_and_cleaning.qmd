@@ -1,0 +1,221 @@
+---
+title: "wrangling-and-cleaning"
+author: "ejh"
+format: html
+---
+.
+##Load libraries
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+
+```
+
+##load data
+
+```{r}
+bit.ly/data-wrangle-lesson-data
+
+catch_original <- read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1")
+
+```
+
+## Data cleaning and wrangling
+
+### Intital data exploration
+```{r}
+
+colnames(catch_original)
+```
+```{r}
+head(catch_original)
+```
+```{r}
+str(catch_original)
+```
+```{r}
+summary(catch_original)
+```
+```{r}
+unique(catch_original$Chinook)
+```
+```{r}
+catchmelt <- reshape2::melt(catch_original)
+```
+
+## Pipe operator
+
+```{r}
+catch_original %>% filter(Year>1900) %>% select(Year) == catch_original
+
+```
+Remove ALL and notersRedCode columns
+
+```{r}
+
+catch_data <- catch_original %>% select("Region", "Year", "Chinook", "Sockeye", "Coho", "Pink", "Chum")
+
+#Equivalent method
+catch_data <- catch_original %>% select(-All, -notesRegCode)
+
+```
+
+##Quality Cehck
+
+```{r}
+dplyr::glimpse(catch_data)
+
+```
+##Change column content
+Goal: convert the Chinook character values to numeric and overwrite old Chinook column
+```{r}
+
+
+catch_clean <- catch_data %>% mutate(Chinook = as.numeric(Chinook))
+which(is.na(catch_clean$Chinook))
+row.names(catch_clean[is.na(catch_clean$Chinook),])
+i <- catch_clean$Chinook %>% is.na() %>% which()
+
+```
+
+Goal change the value of the Chinook NA value to 1 if 
+```{r}
+catch_clean[is.na(catch_clean$Chinook),]
+
+catch_clean[i,]
+# catch_clean$Chinook <- ifelse(catch_clean$Chinook == "I", 1, catch_data$Chinook)
+
+catch_clean <- catch_data %>% 
+  mutate(Chinook = 
+           if_else(Chinook == "I", "1", Chinook),
+         Chinook = as.numeric(Chinook))
+
+catch_clean[i,]
+
+```
+## 'pivot_longer' and 'pivot_wider'
+
+Goal: transform from wide to long format
+
+```{r}
+
+catch_long <- catch_clean %>% 
+  # pivot all columns except Region and Year
+  pivot_longer(cols = -c(Region, Year),
+               names_to = "species",
+               values_to = "catch")
+```
+
+```{r}
+
+catch_long %>% pivot_wider(names_from = species,
+                           values_from = catch)
+
+```
+## Renaming columns
+
+Goal: rename catch column to be called 'catch_thousands'
+
+```{r}
+catch_long <- catch_long %>% rename(catch_thousands = catch)
+colnames(catch_long)
+```
+## Adding columns with mutate
+Goal: create a column 'catch' with units of fish instead of thousands of fish
+
+```{r}
+catch_long <- catch_long %>% mutate(catch = catch_thousands * 1000) %>% select(-catch_thousands)
+
+```
+
+##Summary statistics
+
+Goal: getting the average catch per region
+bit.ly/3ppGUsQ
+
+```{r}
+
+(mean_region <- catch_long %>% group_by(Region) %>% summarize(mean_catch = mean(catch)))
+
+ggplot(mean_region, aes(x = Region, y = mean_catch)) + geom_bar(stat = "identity")
+
+```
+##'filter()'
+
+Goal: go back to 'catch_long' df and fitler and select all rows from the sse region
+
+```{r}
+sse_catch <- catch_long %>% filter(Region == "SSE")
+
+
+```
+Quick excercise:
+1) filter to catches over one million fish
+
+
+```{r}
+
+# (million_fish <- catch_long[catch_long$catch > 1000000,])
+(million_fish <- catch_long %>% filter(catch > 1000000))
+
+```
+
+2) select rows form the SEE region that have information about Chinook salmon
+
+```{r}
+
+# chinook_catch <- catch_long[catch_long$species == "Chinook" & catch_long$Region > "SSE", ]
+(chinook_catch <- catch_long %>% filter(Region == "SSE" & species == "Chinook"))
+
+```
+## Sorting data
+
+Goal: re-calculate mean catch by region and sort by mean catch
+
+```{r}
+
+(mean_region <- catch_long %>% group_by(Region) %>% summarize(mean_catch = mean(catch)) %>% 
+  arrange(mean_catch))
+
+```
+```{r}
+
+(mean_region <- catch_long %>% group_by(Region) %>% summarize(mean_catch = mean(catch)) %>% 
+  arrange(desc(mean_catch)))
+
+```
+## 'separate()' and 'unite()'
+
+```{r}
+
+sites_df <- data.frame(site = c("HAW-101",
+                                "HWA-103",
+                                "OAH-320",
+                                "OAH-219",
+                                "MAI-039"))
+
+(df <- sites_df %>% separate(site, c("island", "site_number"), "-"))
+
+
+
+```
+```{r}
+df %>% unite(code, island, site_number, sep = "-")
+
+```
+
+## Grand finale
+
+```{r}
+
+ggplot(catch_long, aes(x = Year, y = catch)) + geom_area(aes(fill = species))
+
+```
+
+```{r}
+ggplot(catch_long, aes(x = Year, y = catch)) + geom_area(stat = "smooth", aes(fill = species))
+
+```
