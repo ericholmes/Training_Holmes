@@ -7,7 +7,7 @@ format: html
 
 - [Introduction to Quarto](Intro_quarto.html)
 - Cleaning and wrangling data
-- Data Visualization
+- [Data Visualization](Data_visualization.html)
 - Spatial Data in R
 
 This is my new quarto document with a fancy plot
