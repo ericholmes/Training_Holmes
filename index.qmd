@@ -5,6 +5,11 @@ format: html
 
 ## Github page for Eric
 
+- [Introduction to Quarto](Intro_quarto.html)
+- Cleaning and wrangling data
+- Data Visualization
+- Spatial Data in R
+
 This is my new quarto document with a fancy plot
 
 ```{r}
