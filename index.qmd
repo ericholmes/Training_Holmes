@@ -3,23 +3,11 @@ title: "Github pages practice"
 format: html
 ---
 
-## Quarto
+## Github page for Eric
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+This is my new quarto document with a fancy plot
 
 ```{r}
-1 + 1
+plot(y~x, data = data.frame(x = 1:10, y = (1:10)^2), type = "l")
+
 ```
-
-You can add options to executable code like this 
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
