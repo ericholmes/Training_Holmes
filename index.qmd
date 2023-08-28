@@ -8,6 +8,7 @@ format: html
 This is my new quarto document with a fancy plot
 
 ```{r}
+
 plot(y~x, data = data.frame(x = 1:10, y = (1:10)^2), type = "l")
 
 ```
