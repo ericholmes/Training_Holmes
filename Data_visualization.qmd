@@ -31,9 +31,6 @@ range(delta_visits$date)
 unique(delta_visits$time_of_day)
 dput(colnames(delta_visits))
 
-
-leaflet() %>% addTiles() %>% addMarkers(~latitude, ~longitude)
-
 ```
 
 ```{r}
@@ -64,8 +61,107 @@ daily_visit <- visits_long %>% group_by(restore_loc, date, visitor_type) %>%
   summarise(daily_visits = sum(quantity))
 
 ggplot(daily_visit, aes(x = reorder(restore_loc, -daily_visits), y = daily_visits)) + 
-         geom_bar(stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+         geom_col(stat = "identity") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+## Customizing our plot
+
+```{r}
+
+ggplot(daily_visit, aes(x = reorder(restore_loc, -daily_visits), y = daily_visits)) + 
+         geom_col(stat = "identity", fill = "aquamarine4") + theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
+```{r}
 
+ggplot(daily_visit, aes(x = restore_loc, y = daily_visits, fill = visitor_type)) +
+  geom_col() +
+  labs(x = "Restoration Locations", y = "Number of Visits",
+       fill = "Type of visitor", Title = "Total number of visits to Delta Restoration sites by visitor type",
+       subtitle = "Sum of all visits during study period") +
+  coord_flip() + theme_classic()
+
+```
+
+## using 'theme() function to further customize our plot
+
+```{r}
+ggplot(daily_visit, aes(x = restore_loc, y = daily_visits, fill = visitor_type)) +
+  geom_col() +
+  labs(x = "Restoration Locations", y = "Number of Visits",
+       fill = "Type of visitor", Title = "Total number of visits to Delta Restoration sites by visitor type",
+       subtitle = "Sum of all visits during study period") +
+  coord_flip() + theme_bw() +
+  theme(legend.position = "bottom", axis.ticks.y = element_blank())
+
+```
+## Saving theme into an object
+
+```{r}
+
+my_theme <- theme_bw(base_size = 16) + theme(legend.position = "bottom", axis.ticks.y = element_blank())
+
+```
+
+```{r}
+
+ggplot(daily_visit, aes(x = restore_loc, y = daily_visits, fill = visitor_type)) +
+  geom_col() +
+  labs(x = "Restoration Locations", y = "Number of Visits",
+       fill = "Type of visitor", Title = "Total number of visits to Delta Restoration sites by visitor type",
+       subtitle = "Sum of all visits during study period") +
+  coord_flip() + my_theme + scale_y_continuous(breaks = seq(0,120, 20))
+
+```
+```{r}
+daily_visit_total <- daily_visit %>% group_by(restore_loc) %>% mutate(n = sum(daily_visits)) %>% ungroup()
+
+ggplot(daily_visit_total, aes(x = reorder(restore_loc, n), y = daily_visits, fill = visitor_type)) +
+  geom_col() +
+  labs(x = "Restoration Locations", y = "Number of Visits",
+       fill = "Type of visitor", Title = "Total number of visits to Delta Restoration sites by visitor type",
+       subtitle = "Sum of all visits during study period") +
+  coord_flip() + my_theme + scale_y_continuous(breaks = seq(0,120, 20)) +
+  scale_fill_viridis_d(option = "C")
+
+```
+```{r}
+
+ggsave("figures/visit_restore_sites_delta.jpg", width = 12, height = 6, units = "in")
+
+```
+
+## Creating multiple plots with 'facet_wrap()
+
+```{r}
+
+ggplot(daily_visit_total, aes(x = visitor_type, y = daily_visits, fill = visitor_type)) +
+  geom_col() +
+  labs(x = "Restoration Locations", y = "Number of Visits",
+       fill = "Type of visitor", Title = "Total number of visits to Delta Restoration sites by visitor type",
+       subtitle = "Sum of all visits during study period") + theme_bw(base_size = 16) +
+  theme(legend.position = "bottom", axis.ticks.x = element_blank(), axis.text.x = element_blank()) +
+  scale_y_continuous(breaks = seq(0,120, 20)) + 
+  scale_fill_viridis_d(option = "C") + facet_wrap(~restore_loc, nrow = 2)
+
+```
+##Interactive tables with 'DT'
+
+```{r}
+
+locations <- visits_long %>% distinct(restore_loc, .keep_all = T) %>% select(restore_loc, latitude, longitude)
+
+
+```
+
+```{r}
+datatable(locations)
+```
+
+## interactive map with 'Leaflet
+
+```{r}
+leaflet(locations) %>% addTiles() %>% addMarkers(~longitude, ~latitude, popup = ~restore_loc)
+```
