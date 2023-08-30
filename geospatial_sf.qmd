@@ -170,3 +170,75 @@ ggplot(pop_region_3338) +
 
 
 ```
+# Incorporating base maps into ggmap
+
+```{r}
+
+
+
+```
+
+# Leaflet
+
+set up a projection
+
+```{r}
+
+epsg3338 <- leaflet::leafletCRS(
+    crsClass = "L.Proj.CRS",
+    code = "EPSG:3338",
+    proj4def =  "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+    resolutions = 2 ^ (16:7)
+)
+
+```
+
+```{r}
+
+pop_region_4326 <- pop_region_3338 %>% st_transform(crs = 4326)
+
+m <- leaflet(options = leafletOptions(crs = epsg3338)) %>%
+    addPolygons(data = pop_region_4326,
+                fillColor = "gray",
+                weight = 1)
+
+m
+
+```
+
+```{r}
+
+pal = colorNumeric(palette = "Reds", domain = pop_region_4326$total_pop)
+
+```
+
+```{r}
+
+m <- leaflet(options = leafletOptions(crs = epsg3338)) %>%
+  addTiles() %>% ##3857
+    addPolygons(data = pop_region_4326,
+                fillColor = ~ pal(total_pop),
+                weight = 1,
+                color = "black",
+                fillOpacity = 1,
+                label = ~ region) %>% 
+  addCircleMarkers(
+    data = pop_4326,
+    lat = ~lat,
+    lng = ~lng,
+    radius = ~log(population / 500),
+    fillColor = "grey",
+    weight = 0.25,
+    color = "black",
+    label = ~paste0(pop_4326$city, ", population ", pop_4326$population)
+  ) %>% 
+  addLegend(
+        position = "bottomleft",
+        pal = pal,
+        values = range(pop_region_4326$total_pop),
+        title = "Total Population"
+    )
+m
+
+```
+
