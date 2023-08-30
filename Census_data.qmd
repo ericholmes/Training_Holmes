@@ -1,0 +1,77 @@
+---
+title: "Census data in R"
+format: html
+---
+
+```{r}
+
+library(tidycensus)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+```
+
+Add key, only needs to be done once (for each computer)
+```{r}
+# census_api_key("f5ea9e77648ba49650e9d0b52be8d639c033685c", install = TRUE)
+
+```
+```{r}
+
+pop_2020 <- get_decennial(geography = "state",
+                          variable = "P1_001N",
+                          year = 2020)
+
+```
+## Getting table P2
+```{r}
+table_p2_2020 <- get_decennial(geography = "state",
+                               table = "P2",
+                               year = 2020)
+unique(table_p2_2020$variable)
+
+```
+
+```{r}
+var_pl_2020 <- load_variables(2020, "pl")
+
+var_dhc_2020 <- load_variables(2020, "dhc")
+
+```
+
+## Delta counties info
+```{r}
+delta_hisp <- get_decennial(
+  geography = "county",
+  state = "CA",
+  county = c("Alameda", "Contra Costa", "Sacramento", "San Joaquin", "Solano", "Yolo"),
+  variable = c("P2_002N", "P2_003N"),
+  year = 2020
+)
+
+```
+
+```{r}
+library(tidycensus)
+library(tidyverse)
+options(tigris_use_cache = TRUE)
+
+delta_tracts <- get_acs(
+  state = "CA",
+  county = c("Alameda", "Contra Costa", "Sacramento", "San Joaquin", "Solano", "Yolo"),
+  geography = "tract",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2020
+)
+
+head(orange)
+
+```
+
+```{r}
+ggplot(delta_tracts, aes(fill = estimate)) + geom_sf()
+
+```
+
