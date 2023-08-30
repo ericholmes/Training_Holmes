@@ -139,11 +139,34 @@ write_sf(pop_region_3338, "data/ak_regions_population.shp")
 
 ```
 
-#Make a sweet plot
+#Make a sweet plot with ggplot
 
 ```{r}
 
+ggplot(pop_region_3338) +
+  geom_sf(aes(fill = total_pop)) +
+  labs(fill = "Total Population") +
+  scale_fill_continuous(low = "khaki", high = "firebrick", labels = comma) +
+  theme_bw()
 
+```
+```{r}
+
+rivers_3338 <- read_sf("data/ak_rivers_simp.shp")
+st_crs(rivers_3338)
 
 ```
 
+```{r}
+
+ggplot(pop_region_3338) +
+  geom_sf(aes(fill = total_pop)) +
+  geom_sf(data = rivers_3338, aes(linewidth = StrOrder)) +
+  geom_sf(data = pop_3338, size = 0.5) +
+  labs(fill = "Total Population", title = "Total Population by Alaska Region") +
+  scale_fill_continuous(low = "khaki", high = "firebrick", labels = comma) +
+  scale_linewidth(range = c(0.05,0.5), guide = "none") +
+  theme_bw()
+
+
+```
