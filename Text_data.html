@@ -184,6 +184,196 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"Frankenstein_words.png"</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">units =</span> <span class="st">"in"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext) <span class="co"># tidy text tools</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quanteda) <span class="co"># create a corpus</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in stringi::stri_info(): Your current locale is not in the list of
+available locales. Some functions may not work properly. Refer to
+stri_locale_list() for more details on known locale specifiers.
+
+Warning in stringi::stri_info(): Your current locale is not in the list of
+available locales. Some functions may not work properly. Refer to
+stri_locale_list() for more details on known locale specifiers.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Package version: 3.3.1
+Unicode version: 14.0
+ICU version: 70.1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Parallel computing: 80 of 80 threads used.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>See https://quanteda.io for tutorials and examples.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdftools) <span class="co"># read in data</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Using poppler version 22.02.0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr) <span class="co"># wrangle data</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr) <span class="co"># string manipulation</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2) <span class="co"># plots</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(wordcloud)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: RColorBrewer</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># download.file("https://deltacouncil.ca.gov/pdf/delta-plan/2022-06-29-chapter-4-protect-restore-and-enhance-the-delta-ecosystem.pdf",</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#               "data/Delta_ch4.pdf")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ch 4</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>path_df <span class="ot">&lt;-</span> <span class="st">"data/Delta_ch4.pdf"</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>dp_ch4 <span class="ot">&lt;-</span> pdftools<span class="sc">::</span><span class="fu">pdf_text</span>(path_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>corpus</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>corpus_dp_ch4 <span class="ot">&lt;-</span> quanteda<span class="sc">::</span><span class="fu">corpus</span>(dp_ch4)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(corpus_dp_ch4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Corpus consisting of 97 documents, showing 97 documents:
+
+   Text Types Tokens Sentences
+  text1    27     31         1
+  text2     6      6         1
+  text3   140    244        11
+  text4   208    570         9
+  text5   136    251         7
+  text6    22     26         3
+  text7   228    458        14
+  text8   223    424        20
+  text9   282    563        17
+ text10   319    622        26
+ text11   211    383        14
+ text12   213    417        17
+ text13   106    196         9
+ text14   292    580        19
+ text15   281    575        21
+ text16   281    595        25
+ text17   289    586        27
+ text18   305    597        31
+ text19   296    598        24
+ text20   278    561        20
+ text21   122    184         9
+ text22   215    399         9
+ text23   301    570        21
+ text24   289    590        23
+ text25   260    502        18
+ text26   278    539        17
+ text27   309    638        21
+ text28    68     84         6
+ text29   280    539        21
+ text30   212    392        17
+ text31   115    174        12
+ text32   323    710        37
+ text33   254    517        17
+ text34   273    557        16
+ text35   269    534        19
+ text36   249    453        28
+ text37   249    552        19
+ text38   280    518        21
+ text39   227    382        13
+ text40    27     31         3
+ text41   250    516        18
+ text42   290    583        25
+ text43   281    556        26
+ text44   304    583        25
+ text45   186    390        15
+ text46    32     39         3
+ text47   227    744        22
+ text48   138    266        11
+ text49   255    502        23
+ text50   104    143         6
+ text51    35     44         4
+ text52   251    602        24
+ text53   324    579        17
+ text54   258    541        16
+ text55   240    507        17
+ text56   302    583        29
+ text57   213    441        17
+ text58   310    560        19
+ text59   295    566        23
+ text60   168    287        12
+ text61   201    394        17
+ text62    22     26         3
+ text63   272    590        21
+ text64   275    541        16
+ text65   271    517        18
+ text66   272    588        15
+ text67   181    377        16
+ text68   265    492        20
+ text69   278    559        18
+ text70   100    164         6
+ text71   171    322        11
+ text72   219    389        16
+ text73   190    417        10
+ text74   244    484        18
+ text75   206    405        16
+ text76   189    435         9
+ text77   212    411        14
+ text78   196    327        13
+ text79   195    362        12
+ text80   201    334        12
+ text81   183    345         6
+ text82    97    164         5
+ text83   254    519        77
+ text84   172    397        54
+ text85   287    581        82
+ text86   229    521        74
+ text87   265    547        76
+ text88   268    563        88
+ text89   253    532        79
+ text90   223    570        93
+ text91   230    467        60
+ text92   255    518        75
+ text93   280    551        82
+ text94   222    459        65
+ text95   244    509        76
+ text96   245    506        74
+ text97    99    157        21</code></pre>
+</div>
+</div>
+<p>tidy text format</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>tidy_dp_ch4 <span class="ot">&lt;-</span> tidytext<span class="sc">::</span><span class="fu">tidy</span>(corpus_dp_ch4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>tidy_dp_ch4_words <span class="ot">&lt;-</span> tidy_dp_ch4 <span class="sc">%&gt;%</span> <span class="fu">unnest_tokens</span>(word, text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Remove stop words</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>tidy_dp_ch4_clean <span class="ot">&lt;-</span> tidy_dp_ch4_words[<span class="sc">!</span>(tidy_dp_ch4_words<span class="sc">$</span>word <span class="sc">%in%</span> <span class="fu">c</span>(stop_words<span class="sc">$</span>word, <span class="st">"4"</span>, <span class="st">"al"</span>)),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>tidy_dp_ch4_top10 <span class="ot">&lt;-</span> tidy_dp_ch4_clean <span class="sc">%&gt;%</span> <span class="fu">count</span>(word) <span class="sc">%&gt;%</span> <span class="fu">slice_max</span>(n, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tidy_dp_ch4_top10, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(word, n), <span class="at">y =</span> n)) <span class="sc">+</span> <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">fill =</span> <span class="st">"salmon4"</span>) <span class="sc">+</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Word"</span>, <span class="at">y =</span> <span class="st">"Frequency"</span>, <span class="at">title =</span> <span class="st">"Top ten words used in the Chapter 4 of the Delta Plan"</span>) <span class="sc">+</span> <span class="fu">theme_classic</span>() <span class="sc">+</span> <span class="fu">coord_flip</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Text_data_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"DeltaPlan_ch4_words.png"</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">units =</span> <span class="st">"in"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pal <span class="ot">&lt;-</span> <span class="fu">brewer.pal</span>(<span class="dv">6</span>,<span class="st">"Dark2"</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">wordcloud</span>(<span class="at">words =</span> tidy_dp_ch4_top10<span class="sc">$</span>word,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">freq =</span> tidy_dp_ch4_top10<span class="sc">$</span>n,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">vfont=</span><span class="fu">c</span>(<span class="st">"gothic english"</span>,<span class="st">"plain"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Text_data_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"DeltaPlan_ch4_words_GOTHIC.png"</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">units =</span> <span class="st">"in"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 </main>
 <!-- /main column -->

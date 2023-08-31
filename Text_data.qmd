@@ -51,3 +51,80 @@ ggplot(tidy_frank_top10, aes(x = reorder(word, n), y = n)) + geom_bar(stat = "id
 ```{r}
 ggsave("Frankenstein_words.png", height = 4, width = 6, units = "in")
 ```
+
+```{r}
+library(tidytext) # tidy text tools
+library(quanteda) # create a corpus
+library(pdftools) # read in data
+library(dplyr) # wrangle data
+library(stringr) # string manipulation
+library(ggplot2) # plots
+library(wordcloud)
+```
+```{r}
+# download.file("https://deltacouncil.ca.gov/pdf/delta-plan/2022-06-29-chapter-4-protect-restore-and-enhance-the-delta-ecosystem.pdf",
+#               "data/Delta_ch4.pdf")
+```
+```{r}
+# ch 4
+path_df <- "data/Delta_ch4.pdf"
+dp_ch4 <- pdftools::pdf_text(path_df)
+
+```
+corpus
+```{r}
+corpus_dp_ch4 <- quanteda::corpus(dp_ch4)
+summary(corpus_dp_ch4)
+
+```
+tidy text format
+
+```{r}
+tidy_dp_ch4 <- tidytext::tidy(corpus_dp_ch4)
+
+```
+
+
+```{r}
+tidy_dp_ch4_words <- tidy_dp_ch4 %>% unnest_tokens(word, text)
+
+```
+Remove stop words
+
+```{r}
+
+tidy_dp_ch4_clean <- tidy_dp_ch4_words[!(tidy_dp_ch4_words$word %in% c(stop_words$word, "4", "al")),]
+```
+
+```{r}
+tidy_dp_ch4_top10 <- tidy_dp_ch4_clean %>% count(word) %>% slice_max(n, n = 10)
+
+```
+
+```{r}
+ggplot(tidy_dp_ch4_top10, aes(x = reorder(word, n), y = n)) + geom_bar(stat = "identity", fill = "salmon4") +
+  labs(x = "Word", y = "Frequency", title = "Top ten words used in the Chapter 4 of the Delta Plan") + theme_classic() + coord_flip()
+```
+
+```{r}
+
+```
+```{r}
+ggsave("DeltaPlan_ch4_words.png", height = 4, width = 6, units = "in")
+
+```
+
+```{r}
+pal <- brewer.pal(6,"Dark2")
+wordcloud(words = tidy_dp_ch4_top10$word,
+          freq = tidy_dp_ch4_top10$n,
+		vfont=c("gothic english","plain"))
+```
+
+
+```{r}
+ggsave("DeltaPlan_ch4_words_GOTHIC.png", height = 4, width = 6, units = "in")
+
+```
+
+
