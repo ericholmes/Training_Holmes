@@ -1,0 +1,53 @@
+---
+title: "Working with text data"
+format: html
+---
+
+Sting, corpus, token, tokenization
+
+'tidytext' R package
+
+```{r}
+library(gutenbergr)
+library(tidytext)
+library(tidyverse)
+
+
+```
+
+```{r}
+gutenberg_works(title == "Frankenstein; Or, The Modern Prometheus") # frankenstein text
+
+frank_corp <- gutenberg_download(41445)
+
+```
+unnest data
+```{r}
+
+tidy_frank <- frank_corp %>% unnest_tokens(word, text)
+
+```
+Remove stop words
+
+```{r}
+tidy_frank_stopanti <- tidy_frank %>% anti_join(stop_words, by = "word")
+
+tidy_frank_stop <- tidy_frank[!(tidy_frank$word %in% stop_words$word),]
+
+```
+
+Tabulate top words
+
+```{r}
+tidy_frank_top10 <- tidy_frank_stop %>% count(word) %>% slice_max(n, n = 10)
+
+```
+
+```{r}
+ggplot(tidy_frank_top10, aes(x = reorder(word, n), y = n)) + geom_bar(stat = "identity") +
+  labs(x = "Word", y = "Frequency", title = "Top ten words used in Frankenstein") + theme_classic() + coord_flip()
+```
+
+```{r}
+ggsave("Frankenstein_words.png", height = 4, width = 6, units = "in")
+```
