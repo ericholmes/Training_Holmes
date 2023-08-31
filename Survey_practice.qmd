@@ -47,7 +47,8 @@ kable(q2, colnames = c("How long have you been programming?",
 
 ```{r}
 
+q3 <- survey_results %>% select(Q3) %>% group_by(Q3) %>% summarize(n = n())
 
-
+ggplot(q3, aes(x = Q3, y = n)) + geom_bar(stat = "identity")
 ```
 
