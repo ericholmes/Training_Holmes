@@ -1,0 +1,82 @@
+---
+title: "Census_acs"
+format: html
+---
+
+
+```{r}
+library(tidycensus)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+
+```
+
+```{r}
+delta_track_hw <- get_decennial(
+  geography = "tract",
+  variables = c(hispanic = "P2_002N",
+                white = "P2_005N"),
+  summary_var = "P2_001N",
+  state = "CA",
+  county = c("Alameda", "Contra Costa", "Sacramento", "San Joaquin", "Solano", "Yolo"),
+  year = 2020)
+```
+# Calculate perc hisp and white by track
+```{r}
+
+glimpse(delta_track_hw)
+
+delta_track_hw$perc_ethn <- 100* delta_track_hw$value/delta_track_hw$summary_value
+
+```
+# Separate track, county and state
+
+```{r}
+
+delta_track_hw <- delta_track_hw %>% separate(NAME, sep = ",", into = c("tract", "county", "state"))
+
+```
+
+```{r}
+
+ggplot(delta_track_hw, aes(x = perc_ethn, fill = variable)) + geom_density(alpha = .5) +
+  theme_bw() + labs(x = "Percentage of population",
+                    title= "Percentage of population by ethnicity",
+                    fill = "Ethnicity") +
+  facet_wrap(county ~ .)
+ 
+```
+# ACS survey excercise
+```{r}
+vars_acs5_21 <- load_variables(2021, "acs5")
+```
+
+# Download median gross rent data for CA at county level
+```{r}
+
+ca_rent <- get_acs(
+  geography = "county",
+  variables = "B25031_001",
+  state = "CA",
+  year = 2021)
+
+```
+# plot rent by county
+```{r}
+str(ca_rent)
+
+ca_rent <- ca_rent %>% separate(NAME, sep = ",", into = c("county", "state"))
+
+ggplot(ca_rent, aes(x = reorder(county, estimate), y = estimate)) + 
+  geom_point() + coord_flip() + labs(x = "County", y = "Estimate of median rent") +
+  theme_classic() + geom_errorbar(aes(ymin = estimate - moe, ymax = estimate + moe),
+                width = 0.5, linewidth = 0.5) + scale_y_continuous(labels = label_dollar()) + 
+  scale_x_discrete(labels = function(x) str_remove(x, " County"))
+
+```
+
+
+
