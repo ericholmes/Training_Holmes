@@ -1,0 +1,54 @@
+---
+title: "Survey_practice"
+format: html
+---
+
+```{r}
+library(qualtRics)
+library(tidyr)
+library(knitr)
+library(ggplot2)
+library(kableExtra)
+library(dplyr)
+```
+Set api key (only first time)
+```{r}
+# qualtrics_api_credentials(api_key = "Zzuvz4t36VkB5akSB8W3Dryg5YgZ9lowoc3JEfEN", base_url = "ucsb.co1.qualtrics.com", install = TRUE, overwrite = T)
+# qualtrics
+```
+## Get all surveys
+
+```{r}
+
+surveys <- all_surveys()
+kable(surveys) %>%
+    kable_styling()
+
+```
+
+```{r}
+id <- as.character(surveys[1,"id"])
+survey_results <- fetch_survey(id)
+kable(survey_results)
+```
+```{r}
+questions <- survey_questions(id)
+kable(questions)
+
+```
+
+```{r}
+q2 <- survey_results %>% select(Q2) %>% group_by(Q2) %>% summarize(n = n())
+head(q2)
+
+kable(q2, colnames = c("How long have you been programming?",
+                       "Number of Responses"))
+```
+
+```{r}
+
+q3 <- survey_results %>% select(Q3) %>% group_by(Q3) %>% summarize(n = n())
+
+ggplot(q3, aes(x = Q3, y = n)) + geom_bar(stat = "identity")
+```
+
