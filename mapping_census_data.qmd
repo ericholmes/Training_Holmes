@@ -59,7 +59,161 @@ mapview(solano_income, z = "estimate")
 ```
 ```{r}
 
-variables_acs <- load_variables(2021, "asc5")
+variables_acs <- load_variables(2021, "acs5")
 
+```
+
+##Long versus wide
+
+```{r}
+
+race_var <- c(
+    Hispanic = "DP05_0071P",
+    White = "DP05_0077P",
+    Black = "DP05_0078P",
+    Asian = "DP05_0080P")
+
+## Default long
+alameda_race <- get_acs(
+  geography = "tract",
+  variables = race_var,
+  state = "CA",
+  county = "Alameda",
+  geometry = TRUE)
+
+head(alameda_race)
+
+## wide format
+
+alameda_race_wide <- get_acs(
+  geography = "tract",
+  variables = race_var,
+  state = "CA",
+  county = "Alameda",
+  geometry = TRUE,
+  output = "wide")
+
+```
+
+## Erase water
+
+```{r}
+mapview(solano_income, z = "estimate")
+
+```
+
+```{r}
+
+sf_use_s2(FALSE)
+
+solano_erase <- erase_water(solano_income, year = 2021)
+
+mapview(solano_erase, z = "estimate")
+
+```
+## Mapping acs data
+
+```{r}
+alameda_hispanic <- filter(alameda_race, variable == "Hispanic")
+
+ggplot(alameda_hispanic) + geom_sf(aes(fill = estimate))
+
+```
+
+```{r}
+ggplot(alameda_hispanic) + 
+  geom_sf(aes(fill = estimate)) +
+  theme_void() +
+  scale_fill_viridis_b(option = "rocket", n.breaks = 10) +
+  labs(title = "Percentage of Hispanic Population by Census Tract",
+      subtitle = "Alameda County, California",
+      fill = "ACS estimate",
+      caption = "2017-2021 ACS | tidycensus R package")
+
+
+```
+
+```{r}
+
+ggplot(alameda_race, aes(fill = estimate)) + 
+  geom_sf(color = NA) +  ## removes delimitation of each tract
+  theme_void() + 
+  scale_fill_viridis_c(option = "rocket") + 
+  facet_wrap(~variable) +
+  labs(title = "Race / ethnicity by Census tract",
+       subtitle = "Alameda County, California",
+       fill = "ACS estimate (%)",
+       caption = "2017-2021 ACS | tidycensus R package")
+
+```
+
+## Mapping count data
+
+```{r}
+
+alameda_race_counts <- get_acs(
+  geography = "tract",
+  variables = c(
+    Hispanic = "DP05_0071",
+    White = "DP05_0077",
+    Black = "DP05_0078",
+    Asian = "DP05_0080"),
+  state = "CA",
+  county = "Alameda",
+  geometry = TRUE)
+
+## Checking our data. Estimates are in counts not in %
+head(alameda_race_counts)
+
+```
+
+```{r}
+
+alameda_asian <- alameda_race_counts %>% 
+  filter(variable == "Asian")
+
+centroids <- st_centroid(alameda_asian)
+head(centroids)
+
+```
+
+## Graduated symbol map
+
+```{r}
+
+ggplot() + 
+  geom_sf(data = alameda_asian, color = "black", fill = "beige") +
+  geom_sf(data = centroids, aes(size = estimate), alpha = .4, color = "navy", shape = 19) +
+  theme_void() +
+    labs(title = "Asian population by Census tract",
+       subtitle = "2017-2021 ACS, Alameda County, California",
+       size = "ACS estimate") + 
+  scale_size_area(max_size = 6)
+
+```
+
+## Dot density map
+
+```{r}
+alameda_race_dots <- as_dot_density(
+  alameda_race_counts,
+  value = "estimate",
+  values_per_dot = 200,
+  group = "variable"
+)
+
+head(alameda_race_dots)
+
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = alameda_race_counts, color = "lightgrey", fill = "white") + 
+  geom_sf(data = alameda_race_dots, aes(color = variable), size = 0.5, alpha = 0.5) +
+  scale_color_brewer(palette = "Set1") + 
+  guides(color = guide_legend(override.aes = list(size = 3))) + ## overrides the size of the dots in the legend to make it more visible
+  theme_void() + 
+  labs(color = "Race / Ethnicity",
+       caption = "2017-2021 ACS | 1 dot = approximately 200 people")
 ```
 
