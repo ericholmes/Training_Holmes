@@ -1,0 +1,65 @@
+---
+title: "Mapping Census Data"
+format: html
+---
+
+## Load Libraries
+
+```{r}
+library(tidycensus)
+library(mapview)
+library(tigris)
+library(ggplot2)
+library(dplyr)
+library(sf)
+```
+
+## Income in CA by county
+
+```{r}
+
+ca_income <- get_acs(
+  geography = "county",
+  variables = "B19013_001",
+  state = "CA",
+  year = 2021,
+  geometry = T
+)
+
+plot(ca_income["estimate"])
+
+head(ca_income)
+
+```
+## Interactive plot with 'mapview'
+
+```{r}
+
+mapview(ca_income, z = "estimate")
+
+```
+
+## Solano County income by tract
+
+```{r}
+solano_income <- get_acs(
+  geography = "tract",
+  variables = "B19013_001",
+  state = "CA",
+  county = "Solano",
+  geometry = T
+)
+
+```
+
+```{r}
+
+mapview(solano_income, z = "estimate")
+
+```
+```{r}
+
+variables_acs <- load_variables(2021, "asc5")
+
+```
+
