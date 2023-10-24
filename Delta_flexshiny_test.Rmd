@@ -35,7 +35,11 @@ frp <- frp[frp$Total_Site < 17000,]
 # Download Census data
 delta_tracts_wide <- get_acs(
   state = "CA",
-  county = c("Alameda", "Contra Costa", "Sacramento", "San Joaquin", "Solano", "Yolo"),
+  county = c("Alameda", "Contra Costa",
+             "Marin", "Napa",
+             "Sacramento", "San Francisco", 
+             "San Joaquin", "San Mateo", "Santa Clara",
+             "Solano", "Sonoma","Yolo"),
   geography = "tract",
   variables = c("B19013_001","B01002_001", "B25071_001", "B25064_001"),
   geometry = TRUE,

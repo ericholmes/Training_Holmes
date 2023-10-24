@@ -9,6 +9,7 @@ format: html
 - Cleaning and wrangling data
 - [Data Visualization](Data_visualization.html)
 - Spatial Data in R
+- [Delta vulnerability map](Delta_flexshiny_test.html)
 
 This is my new quarto document with a fancy plot
 
