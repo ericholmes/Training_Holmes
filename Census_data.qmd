@@ -9,6 +9,7 @@ library(tidycensus)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(sf)
 
 ```
 
@@ -53,8 +54,7 @@ delta_hisp <- get_decennial(
 ```
 
 ```{r}
-library(tidycensus)
-library(tidyverse)
+
 options(tigris_use_cache = TRUE)
 
 delta_tracts <- get_acs(
@@ -66,12 +66,30 @@ delta_tracts <- get_acs(
   year = 2020
 )
 
-head(orange)
-
 ```
 
 ```{r}
 ggplot(delta_tracts, aes(fill = estimate)) + geom_sf()
+
+# st_write(delta_tracts, "data/delta_census_tracts.shp")
+```
+```{r}
+library(tidyverse)
+delta_blocks <- get_decennial(
+  state = "CA",
+  county = c("Alameda", "Contra Costa", "Sacramento", "San Joaquin", "Solano", "Yolo"),
+  geography = "block",
+  variables = "P2_002N",
+  geometry = TRUE,
+  year = 2020
+)
+
+```
+```{r}
+
+ggplot(delta_blocks, aes(fill = estimate)) + geom_sf()
+
+st_write(delta_blocks, "data/delta_census_blocks.shp")
 
 ```
 
