@@ -69,6 +69,7 @@ m4<-mapview(frp_join[frp_join$variable == "B25071_001",], z = "estimate")
 variables_acs <- load_variables(2021, "acs5")
 
 # PCA ---------------------------------------------------------------------
+
 library(leaflet)
 
 leaflet() %>% addPolygons(frp_wide_join)
