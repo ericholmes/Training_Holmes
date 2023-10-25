@@ -5,11 +5,11 @@ date: "2023-10-24"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
+    vertical_layout: scroll
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
-library(palmerpenguins)
 library(ggplot2)
 library(dplyr)
 library(leaflet) # interactive maps
@@ -78,6 +78,7 @@ Row {data-height=500}
 
 ### Map
 ```{r}
+
 pal.income <- colorNumeric(
   palette = c("darkgreen","lemonchiffon", "brown"),
   domain = delta_tracts_wide$Median_income)
@@ -112,8 +113,36 @@ leaflet() %>%
     options = layersControlOptions(collapsed = FALSE))
 
 ```
+Row {data-height = 500}
+-----------------------------------------------------
+```{r}
+benefits <- data.frame(SV = c(rep("Disadvantaged",6),rep("Non-disadvantaged",6)),
+                       variable = rep(c("Flood protection", "Education",
+                                        "Workforce Devlopment", "Recreation",
+                                        "Wildlife habitat", "Water quality"), 2, each = T),
+                       value = c(80, 60, 75, 60, 95, 45,
+                                 70, 80, 65, 61, 90, 60))
 
-Row {data-height=500}
+plotly::ggplotly(ggplot(benefits, aes(x = variable, y = value, fill = SV)) + 
+                   geom_bar(stat = "identity", position = "dodge") + 
+                   coord_flip() +
+                   labs(y = "Score", x = NULL, title = "Benefits") +
+                   theme(legend.position = "bottom") + theme_bw())
+
+```
+
+```{r}
+set.seed(1)
+grants_ts <- data.frame(x = 1995:2021,
+                        y = runif(n = 27, min = 0, max = 100))
+
+plotly::ggplotly(ggplot(grants_ts, aes(x = x, y = y)) + geom_bar(stat = "identity") +
+  labs(x = "Year", y = "Project acreage/1000") + theme_bw())
+
+```
+
+
+Row {data-height = 500}
 -----------------------------------------------------------------------
 
 <!--When we use the orientation "rows" we specify each row using "Row".
