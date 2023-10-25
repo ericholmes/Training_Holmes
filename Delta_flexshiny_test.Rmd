@@ -88,7 +88,7 @@ pal.age <- colorNumeric(
   domain = delta_tracts_wide$Median_age)
 
 leaflet() %>%
-  addProviderTiles(providers$Stamen.Toner, group = "Toner") %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "Toner") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>% 
   addPolygons(data = delta_tracts_wide, 
               group = "Median income", 
