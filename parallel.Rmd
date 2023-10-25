@@ -112,3 +112,66 @@ stopImplicitCluster()
 
 ```
 
+# Future and furrr
+
+```{r}
+
+library(future)
+plan(multisession)
+
+f <- future({
+  cat("Hello world!\n")
+  6.28
+})
+
+
+v <- value(f)
+v
+```
+```{r}
+plan(multisession)
+
+download_data <- function(){
+  Sys.sleep(0.5)
+  return(c(1,2,3))
+}
+
+run_model <- function(){
+  Sys.sleep(0.5)
+  return(42)
+}
+
+model_result <- future({
+  d <- download_data()
+  result <- run_model(d)
+  result
+})
+
+while(!resolved(model_result)){
+  cat("Waiting for model to complete...\n")
+  Sys.sleep(.2)
+  cat("Do some more work, like refresh another graph\n")
+}
+
+```
+# purrr and furrr
+
+```{r}
+
+library(purrr)
+
+system.time({
+  res_purr <- map(trials, boot_fx)
+  })
+
+library(furrr)
+
+plan(multisession, workers = 8)
+
+system.time({
+  res_furrr <- future_map(trials, boot_fx, .options = furrr_options(seed = TRUE))
+})
+
+```
+
+
