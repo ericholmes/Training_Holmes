@@ -1,0 +1,120 @@
+---
+title: "Delta vulnerability map"
+author: "Eric"
+date: "2023-11-17"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(sf)
+library(purrr)
+library(leaflet)
+library(htmltools)
+```
+
+```{r, echo = F, results = "hide"}
+
+
+# Legal-eco boundary ------------------------------------------------------
+
+legaleco <- read_sf("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Vector/Delta_legal_eco_boundary/Delta_legal_eco_boundary/bay-delta_LegalEco_boundary.shp")
+legaleco <- st_transform(legaleco, '+proj=longlat +datum=WGS84')
+
+# Delta Conservancy 1 -----------------------------------------------------
+
+parentfolder <- "C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/Delta_conservancy_combined/For NCEAS"
+tree <- list.dirs(parentfolder)
+
+filelist <- c()
+for(i in tree){
+  tempfiles <- list.files(i, pattern = ".shp$", full.names = T)
+  if(length(tempfiles) >= 1 ){
+    filelist <-  c(filelist, tempfiles[1])
+  }
+}
+
+deltacons1 <- filelist |> 
+  purrr::map(\(f) sf::read_sf(f) |> 
+               sf::st_transform(4326) |>
+               dplyr::mutate(source = f, .before = 1)) |> 
+  purrr::list_rbind() |>
+  dplyr::as_tibble() |> 
+  sf::st_sf()
+
+deltacons1_polys <- st_zm(deltacons1[st_is(deltacons1,"POLYGON"),])
+
+deltacons1_polys$Id <- paste0("A",rownames(deltacons1_polys))
+
+
+# ecoatlas ----------------------------------------------------------------
+
+ecoatlas_polys <- read_sf("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/ecoatlas_sfbrafunded_shapefile/habitatprojects.shp")
+
+ecoatlas_df <- read.csv("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/ecoatlas_sfbrafunded_projectsandsites.csv")
+ecoatlas_df <- ecoatlas_df[is.na(ecoatlas_df$latitude) == F,]
+ecoatlas_pts <- st_as_sf(ecoatlas_df, coords = c("longitude", "latitude"))
+
+# CDFW prop 1 -------------------------------------------------------------
+
+cdfw_prop1 <- readxl::read_excel("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/CDFW_Prop_1_68_GHG_Rest_Grants_Delta_data_20231113-no science.xlsx")
+cdfw_pts <- st_as_sf(cdfw_prop1, coords = c("Longitude", "Latitude"))
+
+
+# State Coastal Conservancy -----------------------------------------------
+
+scc_projects <- readxl::read_excel("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/Prop 1 Projects_SCC.xls")
+scc_pts <- st_as_sf(scc_projects, coords = c("Longitude", "Latitude"))
+
+# ECP project locations ---------------------------------------------------
+
+ecp_projects <- readxl::read_excel("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/ECP_ProjectLocations_Points_PRIMARY.xlsx")
+ecp_projects <- ecp_projects[is.na(as.numeric(ecp_projects$Latitude)) == F,]
+ecp_pts <- st_as_sf(ecp_projects, coords = c("Longitude", "Latitude"))
+
+
+# CNRA Projects -----------------------------------------------------------
+
+cnra_projects <- readxl::read_excel("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Raw_spatial_data/CNRA_Project_Coordinates.xlsx")
+cnra_pts <- st_as_sf(cnra_projects, coords = c("Longitude", "Latitude"))
+
+# FRP sites ---------------------------------------------------------------
+
+frp <- read_sf("C:/Users/eholmes/Documents/Spatial/NCEAS_restoration/data/spatial/Vector/Eco_restore_polygons.shp")
+frp <- st_transform(frp, '+proj=longlat +datum=WGS84')
+
+
+```
+
+Row {data-height=800}
+-------------------------------------
+
+### Map
+```{r}
+pal.themes <- colorNumeric(
+  palette = c("darkgreen","lemonchiffon", "brown"),
+  domain = c(-1,1))
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "Grey background") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Imagery") %>% 
+  addPolygons(data = legaleco, color = "black") %>% 
+  addPolygons(data = deltacons1_polys, color = "pink", label = ~htmlEscape(Id), group = "delta conservancy") %>% 
+  addPolygons(data = frp, color = "forestgreen", label = ~htmlEscape(Name), group = "Fish restoration program") %>%
+  addPolygons(data = ecoatlas_polys, color = "red", label = ~htmlEscape(projectid), group = "ecoatlas_polys") %>% 
+  addCircleMarkers(data = ecoatlas_pts, color = "red", label = ~htmlEscape(projectid), group = "ecoatlas_pts") %>% 
+  addCircleMarkers(data = cdfw_pts, color = "blue", label = ~htmlEscape(Number), group = "cdfw prop 1") %>% 
+  addCircleMarkers(data = ecp_pts, color = "green", label = ~htmlEscape(ProjectID), group = "ecp") %>% 
+  addCircleMarkers(data = scc_pts, color = "orange", label = ~htmlEscape(Project_Number), group = "State Coastal Conservancy") %>% 
+  addCircleMarkers(data = cnra_pts, color = "brown", group = "CNRA") %>% 
+  addLayersControl(
+    baseGroups = c("Grey background", "Imagery"),
+    overlayGroups = c("delta conservancy", "Fish restoration program", "ecoatlas_polys","ecoatlas_pts",
+                      "cdfw prop 1", "ecp", "State Coastal Conservancy", "CNRA"),
+    options = layersControlOptions(collapsed = FALSE))
+
+```
+

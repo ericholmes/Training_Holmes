@@ -126,7 +126,8 @@ benefits <- data.frame(SV = c(rep("Disadvantaged",6),rep("Non-disadvantaged",6))
 plotly::ggplotly(ggplot(benefits, aes(x = variable, y = value, fill = SV)) + 
                    geom_bar(stat = "identity", position = "dodge") + 
                    coord_flip() +
-                   labs(y = "Score", x = NULL, title = "Benefits") +
+                   labs(y = "Score", x = NULL, title = "Benefits", 
+                        subtitle = "Data is fictional. Use for proof of concept only") +
                    theme(legend.position = "bottom") + theme_bw())
 
 ```
