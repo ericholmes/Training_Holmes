@@ -1,0 +1,195 @@
+---
+title: "Delta vulnerability map"
+author: "Eric"
+date: "2023-11-17"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(dplyr)
+library(leaflet) # interactive maps
+library(plotly) # interactive plots
+library(sf)
+library(tidycensus)
+library(htmltools)
+```
+
+```{r, echo = F, results = "hide"}
+
+gpc <- st_read("data/gpc3/gpc3_spatial.gpkg")
+
+gpc_layers <- st_layers("data/gpc3/gpc3_spatial.gpkg")
+
+for(i in gpc_layers[["name"]]){
+  print(i)
+  temp <- st_read("data/gpc3/gpc3_spatial.gpkg", layer = i)
+  temp <- st_transform(temp, '+proj=longlat +datum=WGS84')
+  assign(i, temp)
+  rm(temp)
+}
+
+legal_eco <- st_read("data/bay-delta_LegalEco_boundary.shp")
+
+legal_eco_wgs84 <- st_transform(legal_eco, '+proj=longlat +datum=WGS84')
+
+
+# add metadata to sites ---------------------------------------------------
+
+cnra <- merge(cnra, read.csv("data/gpc3/cnra_atts.csv"), by = "nceas_id")
+cscc <- merge(cscc, read.csv("data/gpc3/cscc_atts.csv"), by = "nceas_id")
+sfbra <- merge(sfbra, read.csv("data/gpc3/sfbra_atts.csv"), by = "nceas_id")
+cdfw <- merge(cdfw, read.csv("data/gpc3/cdfw_atts.csv"), by = "nceas_id")
+
+ssjdc_POINT <- merge(ssjdc_POINT, read.csv("data/gpc3/ssjdc_atts.csv"), by = "nceas_id")
+ssjdc_LINESTRING <- merge(ssjdc_LINESTRING, read.csv("data/gpc3/ssjdc_atts.csv"), by = "nceas_id")
+ssjdc_MULTILINESTRING <- merge(ssjdc_MULTILINESTRING, read.csv("data/gpc3/ssjdc_atts.csv"), by = "nceas_id")
+ssjdc_POLYGON <- merge(ssjdc_POLYGON, read.csv("data/gpc3/ssjdc_atts.csv"), by = "nceas_id")
+ssjdc_MULTIPOLYGON <- merge(ssjdc_MULTIPOLYGON, read.csv("data/gpc3/ssjdc_atts.csv"), by = "nceas_id")
+# metric <- read.csv("data/scraped_data/cnra/clean_data/project_metric.csv")
+# colpal <- colorFactor(palette = RColorBrewer::brewer.pal(8, "Set1"), domain = sites_clip$Project.Metric)
+# 
+# sites_clip <- merge(sites_clip, metric, by.x = "ProjectNo_FK", by.y = "project_id", all.x = T)
+# sites_clip$popup_text <- paste(paste("Project_id:", sites_clip$ProjectNo_FK), 
+#                                paste("Type:", sites_clip$Project.Metric), 
+#                                paste("Acres:", sites_clip$Quantity), sep = "<br>")
+
+# spatial join with SOVI metrics ------------------------------------------
+
+svi <- read_sf("data/CA_SOVI_shapefiles/CA_SOVI_theme_1.shp") %>% 
+  select(c("AREA_SQMI", "E_TOTPOP", "RPL_THEME1", "RPL_THEME2", "RPL_THEME3", "RPL_THEME4", "RPL_THEMES"))
+
+## Get everything in the same coordinate reference system (WGS84 = '+init=EPSG:4326')
+# legal_eco_wgs <- st_transform(legal_eco, crs = st_crs(rest_sites))
+svi_wgs <- st_transform(svi, crs = '+proj=longlat +datum=WGS84')
+# frp_wgs <- st_transform(frp, crs = st_crs(rest_sites))
+
+##Temporary workaround: remove spherical geometry (should probably be using a projected CRS in the future)
+sf::sf_use_s2(FALSE)
+## Select census tracts that intersect with delta boundary
+svi_delta <- svi_wgs[lengths(st_intersects(svi_wgs, legal_eco_wgs84))>0,]
+
+# ## spatial join restoration projects and SVI datasets
+rest_svi_join <- st_join(cnra, svi_wgs, largest = T)
+
+restlist <- list(cnra, sfbra,cscc,cdfw, ssjdc_LINESTRING, ssjdc_POLYGON, ssjdc_POINT, ssjdc_MULTIPOLYGON, ssjdc_MULTILINESTRING)
+
+rsj_num <- data.frame()
+
+## Remove sticky geometry to be able to run PCA
+for(j in restlist){
+  temp_svi_join <- st_join(j, svi_wgs, largest = T)
+  temp_num <- sf::st_drop_geometry(rest_svi_join[,c("AREA_SQMI", "E_TOTPOP", "RPL_THEME1", "RPL_THEME2", "RPL_THEME3", "RPL_THEME4", "RPL_THEMES")])
+  
+  rsj_num <- rbind(rsj_num, temp_num)
+}
+
+rsj_num <- rsj_num[complete.cases(rsj_num),]
+
+rsj_pca <- prcomp(rsj_num[,3:7], scale. = TRUE)
+
+
+```
+
+Row {data-height=500}
+-------------------------------------
+
+### Map
+```{r}
+pal.themes <- colorNumeric(
+  palette = c("darkgreen","lemonchiffon", "brown"),
+  domain = c(-1,1))
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "Grey background") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Imagery") %>% 
+  
+  addPolygons(data = svi_delta, 
+              group = "SOVI_theme_1", 
+              color = ~pal.themes(RPL_THEME1), 
+              fillColor = ~pal.themes(RPL_THEME1), 
+              weight = 1, fillOpacity = .8) %>%  
+  addPolygons(data = legal_eco_wgs84, color = "black", 
+              fillOpacity = 0, weight = 1) %>% 
+  
+  addCircleMarkers(group = "cnra", data = cnra, opacity = .5, color = "blue", 
+                   label = ~htmlEscape(paste("CNRA:", Project.Name))) %>% 
+  addPolygons(group = "sfbra", data = sfbra, opacity = .5, color = "red", 
+                   label = ~htmlEscape(paste("SFBRA:", projectname))) %>% 
+  addCircleMarkers(group = "cscc", data = cscc, opacity = .5, color = "green", 
+                   label = ~htmlEscape(paste("CSCC:", Project_Name))) %>% 
+  addCircleMarkers(group = "cdfw", data = cdfw, opacity = .5, color = "black", 
+                   label = ~htmlEscape(paste("CDFW:", Title))) %>%
+  addPolygons(group = "ssjdc", data = ssjdc_MULTIPOLYGON, opacity = .5, color = "orange", 
+                   label = ~htmlEscape(paste("SSJDC:", ProjectName))) %>%
+  addCircleMarkers(group = "ssjdc", data = ssjdc_POINT, opacity = .5, color = "orange", 
+                   label = ~htmlEscape(paste("SSJDC:", ProjectName))) %>%
+  addPolygons(group = "ssjdc", data = ssjdc_POLYGON, opacity = .5, color = "orange", 
+                   label = ~htmlEscape(paste("SSJDC:", ProjectName))) %>%
+  addPolylines(group = "ssjdc", data = ssjdc_LINESTRING, opacity = .5, color = "orange", 
+                   label = ~htmlEscape(paste("SSJDC:", ProjectName))) %>%
+  addPolylines(group = "ssjdc", data = ssjdc_MULTILINESTRING, opacity = .5, color = "orange", 
+                   label = ~htmlEscape(paste("SSJDC:", ProjectName))) %>%
+  
+  addLayersControl(
+    baseGroups = c("Grey background", "Imagery"),
+    overlayGroups = c("SOVI_theme_1",
+                      "cnra",
+                      "sfbra",
+                      "cscc",
+                      "cdfw",
+                      "ssjdc"),
+    options = layersControlOptions(collapsed = FALSE))
+
+```
+Row {data-height = 500}
+-----------------------------------------------------
+```{r}
+benefits <- data.frame(SV = c(rep("Disadvantaged",6),rep("Non-disadvantaged",6)),
+                       variable = rep(c("Flood protection", "Education",
+                                        "Workforce Devlopment", "Recreation",
+                                        "Wildlife habitat", "Water quality"), 2, each = T),
+                       value = c(80, 60, 75, 60, 95, 45,
+                                 70, 80, 65, 61, 90, 60))
+
+plotly::ggplotly(ggplot(benefits, aes(x = variable, y = value, fill = SV)) + 
+                   geom_bar(stat = "identity", position = "dodge") + 
+                   coord_flip() +
+                   labs(y = "Score", x = NULL, title = "Benefits", 
+                        subtitle = "Data is fictional. Use for proof of concept only") +
+                   theme(legend.position = "bottom") + theme_bw())
+
+```
+
+```{r}
+set.seed(1)
+grants_ts <- data.frame(x = 1995:2021,
+                        y = runif(n = 27, min = 0, max = 100))
+
+plotly::ggplotly(ggplot(grants_ts, aes(x = x, y = y)) + geom_bar(stat = "identity") +
+  labs(x = "Year", y = "Project acreage/1000") + theme_bw())
+
+```
+
+
+Row {data-height = 500}
+-----------------------------------------------------------------------
+
+<!--When we use the orientation "rows" we specify each row using "Row".
+    To adjust the size of the row use the attribute {data-height=xxx}-->
+
+### PCA biplot
+
+```{r}
+biplot(rsj_pca)
+```
+
+### Corrplot
+
+```{r}
+corrplot::corrplot(cor(rsj_num), type = "upper", method = "number")
+```
